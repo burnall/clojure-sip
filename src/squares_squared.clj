@@ -1,4 +1,4 @@
-(ns puz6
+(ns squares-squared
   (:require [clojure.string :as str]))
 
 ;Squares Squared
