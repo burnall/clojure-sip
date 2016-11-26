@@ -28,9 +28,3 @@
 
 (map println (ss 5 5000))
 
-
-;; graph 1
-;(defn g[s]
-;  (println (clojure.string/split s "\d+"))
-;  )
-
