@@ -1,4 +1,4 @@
- (ns graph2)
+ (ns sip.graph2)
 
 (let [
       read-pair (fn[] (map read-string (clojure.string/split (read-line) #"\s")))

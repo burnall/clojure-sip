@@ -1,4 +1,4 @@
-(ns squares-squared
+(ns sip.squares-squared
   (:require [clojure.string :as str]))
 
 ;Squares Squared

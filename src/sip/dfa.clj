@@ -1,4 +1,4 @@
-(ns dfa)
+(ns sip.dfa)
 
 (defn dfa [o]
   (let [{tr :transitions accepts :accepts start :start} o

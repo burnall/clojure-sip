@@ -1,4 +1,4 @@
-(ns five-gon-ring)
+(ns sip.five-gon-ring)
 
 ;68
 

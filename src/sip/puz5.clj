@@ -1,4 +1,4 @@
-(ns puz5)
+(ns sip.puz5)
 (require 'clojure.set)
 
 (defn f [v] (iterate (fn [w] (vec (concat [(w 0)] (map +' w (rest w)) [(last w)]))) v))

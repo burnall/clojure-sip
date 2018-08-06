@@ -1,4 +1,4 @@
-(ns puz2)
+(ns sip.puz2)
 
 ;89
 

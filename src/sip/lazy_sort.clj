@@ -1,4 +1,4 @@
- (ns lazy-sort)
+ (ns sip.lazy-sort)
 
 (defn sort-parts [work]
   (lazy-seq

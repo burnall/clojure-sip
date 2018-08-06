@@ -1,4 +1,4 @@
- (ns graph)
+ (ns sip.graph)
 
 ; graph 1
 

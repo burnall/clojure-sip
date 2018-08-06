@@ -1,4 +1,4 @@
-(ns puz4)
+(ns sip.puz4)
 (require 'clojure.set)
 
 ;130

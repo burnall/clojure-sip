@@ -1,4 +1,4 @@
-(ns puz3)
+(ns sip.puz3)
 
 (defn it [& colls]
   (let [step

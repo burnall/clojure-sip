@@ -1,4 +1,4 @@
-(ns puzzles)
+(ns sip.puzzles)
 
 ;(:use clojure.set)
 ;(println (clojure.set/difference #{2} #{2 3}))

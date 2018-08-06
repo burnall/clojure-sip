@@ -1,4 +1,4 @@
-(ns fractions)
+(ns sip.fractions)
 
 
 (defn next-fraction [d acc] (if (zero? acc) d (+ d (/ 1 acc))))

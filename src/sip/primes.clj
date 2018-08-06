@@ -1,4 +1,4 @@
-(ns primes)
+(ns sip.primes)
 
 (require 'permutation)
 

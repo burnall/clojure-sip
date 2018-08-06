@@ -1,4 +1,4 @@
-(ns latin-square)
+(ns sip.latin-square)
 
 ; get max row's width
 ; get all combinations

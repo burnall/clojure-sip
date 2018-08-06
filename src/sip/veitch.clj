@@ -1,4 +1,4 @@
-(ns veitch)
+(ns sip.veitch)
 
 (defn vee [s]
   (let [
