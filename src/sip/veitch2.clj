@@ -71,10 +71,8 @@
   (:minTerms
     (reduce (fn [{notCoveredTerms :notCoveredTerms minTerms :minTerms} derivedTerm]
               (if-let [covered (seq (filter #(covers? derivedTerm %) notCoveredTerms))]
-                ;(do (print "derived term:\n" derivedTerm "covered:\n" covered "\n")
                   {:notCoveredTerms (clojure.set/difference notCoveredTerms covered)
                    :minTerms (conj minTerms derivedTerm)}
-                ;(do (print "derived term:\n" derivedTerm "\n") 
                   {:notCoveredTerms notCoveredTerms :minTerms minTerms}))
 
             {:notCoveredTerms originalTerms
@@ -83,86 +81,38 @@
              derivedTerms)))
 
 (defn findMinCoverage2 [originalTerms derivedTerms]
-  (let [getDerived (fn [original] 
-                      (filterv (fn [derived] (covers? derived original)) derivedTerms))
-        covers (map getDerived originalTerms)]
-     covers))
+  (let [getDerivedCoverageForTerm 
+         (fn [term] (set (filter (fn [derived] (covers? derived term)) derivedTerms)))
 
+        coverMap (into {} (mapv (fn[term] [term (getDerivedCoverageForTerm term)]) originalTerms))
 
-(defn vei0 [termSet]
-  (let [originalTerms (set (map toIntArray termSet))
-        terms (addId (mapv (fn[term] {:data term}) originalTerms))
-        sol (buildSolution [terms])
-        irr (findIrreducibles sol)
-        minTerms (findMinCoverage originalTerms irr)]
-    (do (print "Input:\n" terms "\n\n")
-        (print "Solution:\n" sol "\n\n")
-        (print "Irreducibles:\n" irr "\n\n")
-        (print "Min terms:\n" minTerms "\n\n")
-        (set (map toLetterSet minTerms))
-        )))  
+        getMinOfTwo (fn [[termA coverA] [termB coverB]]
+                       (if (< (count coverB) (count coverA)) [termB coverB] [termA coverA]))
+        findMin (fn [coverMap] (reduce getMinOfTwo coverMap))
 
+        removeDerived (fn [coverMap derivedTerm]
+          (into {} (filter (fn [[term cover]] (not (contains? cover derivedTerm))) coverMap)))
+
+        _findMinCoverage 
+          (fn [acc coverMap] 
+            (let [[term cover] (findMin coverMap) 
+                 derived (first cover)
+                 newCoverMap (removeDerived coverMap derived)
+                 newAcc (conj acc derived)]
+              (if (zero? (count newCoverMap))
+                newAcc
+                (recur newAcc newCoverMap))))    
+
+        ]
+    (_findMinCoverage #{} coverMap)))   
+     
 (defn vei [termSet]
   (let [originalTerms (set (map toIntArray termSet))
         terms (addId (mapv (fn[term] {:data term}) originalTerms))
         sol (buildSolution [terms])
         irr (findIrreducibles sol)
         minTerms (findMinCoverage2 originalTerms irr)]
-    minTerms))  
+    (set (map toLetterSet minTerms)))) 
 
-(defn vei-ex0 []
-  (vei #{#{'a 'b 'c} 
-         #{'a 'B 'C}
-         #{'A 'B 'C}}))
-
-(defn vei-ex []
-  (vei #{#{'a 'b 'c} 
-         #{'a 'B 'c}
-         #{'a 'b 'C}
-         #{'a 'B 'C}}))
-
-
-(defn vei-ex2 []
-  (vei #{#{'a 'b 'c} 
-         #{'a 'B 'c}
-         #{'a 'B 'C}}))
-
-(defn vei-ex3 []
-  (vei #{#{'a 'B 'C 'd}
-         #{'A 'b 'c 'd}
-         #{'A 'b 'c 'D}
-         #{'A 'b 'C 'd}
-         #{'A 'b 'C 'D}
-         #{'A 'B 'c 'd}
-         #{'A 'B 'c 'D}
-         #{'A 'B 'C 'd}}))
-
-(defn vei-ex4 []
-  (vei #{#{'a 'b 'c} 
-         #{'a 'B 'c}
-         #{'a 'b 'C}
-         #{'a 'B 'C}}))
-
-(defn vei-ex5 []
-  (vei #{#{'A 'B 'C 'D}
-         #{'A 'B 'C 'd}}))
-
-(defn vei-ex6 []
-  (vei #{#{'a 'b 'c 'd}
-         #{'a 'B 'c 'd}
-         #{'a 'b 'c 'D}
-         #{'a 'B 'c 'D}
-         #{'A 'B 'C 'd}
-         #{'A 'B 'C 'D}
-         #{'A 'b 'C 'd}
-         #{'A 'b 'C 'D}}))
-
-(defn vei-ex7 []
-  (vei #{#{'a 'B 'c 'd}
-         #{'A 'B 'c 'D}
-         #{'A 'b 'C 'D}
-         #{'a 'b 'c 'D}
-         #{'a 'B 'C 'D}
-         #{'A 'B 'C 'd}}))
                                                                         
 
