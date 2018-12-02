@@ -1,5 +1,5 @@
 # sip
 
-Implementing Euler and 4clojure puzzles
+Implementing puzzles: Euler, 4clojure, advent of code and everything
 
 
