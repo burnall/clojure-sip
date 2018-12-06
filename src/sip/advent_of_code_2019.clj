@@ -200,5 +200,35 @@
          (apply max-key val)
          (key)
          ((fn [{:keys [id minute]}] (* id minute))))))
-        
 
+; DAY 5
+
+
+(def input5
+  (->> "src/sip/adv-input5.txt"
+       (slurp)
+       (clojure.string/trim-newline)))
+
+(defn react? [a b] 
+  (= 32 (Math/abs (- (int a) (int b)))))
+
+(defn adv9 
+  ([] (adv9 [] input5))
+  ([a b] (cond 
+           (empty? b) a
+           (and (seq a) (react? (peek a) (first b))) 
+             (recur (subvec a 0 (dec (count a))) (rest b))
+           :else (recur (conj a (first b)) (rest b)))))   
+
+(defn replace-i [s i]
+  (clojure.string/replace 
+    s 
+    (re-pattern (str \[ (char (+ i 65)) (char (+ 32 65 i)) \]))
+    ""))
+
+(defn adv10 []        
+  (->> (range 0 26)
+       (map #(replace-i input5 %))
+       (map (comp count #(adv9 [] %)))
+       (sort)
+       (first)))
