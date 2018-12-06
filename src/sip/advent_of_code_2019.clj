@@ -140,5 +140,20 @@
 ; DAY 4
 
 ; [1518-10-23 23:47] Guard #1627 begins shift
+(defn parse-guard-log [line]
+  (let [[year month day hour minute msg id] 
+          (rest (first (re-seq #"\[(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})\] (.{5}) (#\d+)?" line)))
+        [year month day hour minute id] (map #(Integer/parseInt %) [year month day hour minute (if id (subs id 1) "0")])]
+    {:year year, :month month, :day day, :hour hour, :minute minute, :id id,
+     :tag (condp = msg 
+            "falls" :fall
+            "wakes" :wake
+            "Guard" :begin msg)}))      
 
+(def input4
+  (-> "src/sip/adv-input4.txt"
+      (slurp)
+      (clojure.string/split #"\n")
+      (#(mapv parse-guard-log %))))
 
+;(sort-by (juxt :year :month :day :hour :minute))
