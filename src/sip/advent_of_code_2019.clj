@@ -156,4 +156,49 @@
       (clojure.string/split #"\n")
       (#(mapv parse-guard-log %))))
 
-;(sort-by (juxt :year :month :day :hour :minute))
+
+(defn get-sleep-intervals [guard-log]
+  (->> guard-log
+      (sort-by (juxt :year :month :day :hour :minute))
+      (reduce (fn [[cid v] record]
+                (let [prev (peek v)]
+                  (condp = (:tag record)
+                    :begin [(:id record) v]
+                    :fall [cid (conj v {:id cid, :start (:minute record), :end 59})]
+                    :wake [cid (assoc v 
+                                      (dec (count v))
+                                      (assoc prev :end (:minute record)))])))
+              [-1 []])
+      (second)))
+     
+(defn adv7 []
+  (let [intervals (get-sleep-intervals input4)
+        most-sleeping 
+          (->> intervals
+               (group-by :id)
+               (map (fn [[id records]] 
+                      {:id id
+                       :total (reduce (fn [acc rec] (+ acc (- (:end rec) (:start rec)))) 0 records)}))
+               (apply max-key :total)
+               (:id))]
+    (->> intervals
+         (filter #(= (:id %) most-sleeping))
+         (mapcat #(range (:start %) (:end %)))
+         (frequencies)
+         (apply max-key val)
+         (key)
+         (* most-sleeping))))
+   
+(defn adv8[]
+  (let [intervals (get-sleep-intervals input4)]
+    (->> intervals 
+         (mapcat (fn [rec] 
+                   (map (fn [minute] 
+                          {:id (:id rec), :minute minute})  
+                        (range (:start rec) (:end rec)))))
+         (frequencies)
+         (apply max-key val)
+         (key)
+         ((fn [{:keys [id minute]}] (* id minute))))))
+        
+
