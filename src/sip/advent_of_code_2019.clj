@@ -262,9 +262,12 @@
                    :else [imin indexes]))
                [Integer/MAX_VALUE []])))
 
+(defn manhattan-distance[[xa ya] [xb yb]]
+  (+ (Math/abs (- xa xb)) (Math/abs (- ya yb))))
+
 (defn get-closest-index [[xa ya] points]
   (->> points 
-       (map (fn [[x y]] (+ (Math/abs (- xa x)) (Math/abs (- ya y)))))
+       (map (partial manhattan-distance [xa ya]))
        (get-min-with-ties)
        ((fn [[imin indexes]] (if (= (count indexes) 1) (first indexes) -1))))) 
 
@@ -295,5 +298,25 @@
            (frequencies)
            (apply max-key second)
            (second)))))
-  
-  
+
+(defn sum-distance [points [xa ya]]
+  (reduce (fn [acc [x y]] (+ acc (manhattan-distance [xa ya] [x y])))
+          0
+          points))
+
+(defn get-points-inside-limits [points limits]
+  (for [x (range (:minx limits) (inc (:maxx limits)))
+        y (range (:miny limits) (inc (:maxy limits)))]
+    [x y]))    
+
+
+(defn adv12 
+  ([] (adv12 input6))
+  ([points]
+    (let [limits (get-limits points)
+          points-inside (get-points-inside-limits points limits)] 
+      (->> points-inside
+           (map (partial sum-distance points)) 
+           (filter (partial > 10000))
+           (count)))))
+       
