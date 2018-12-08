@@ -319,4 +319,49 @@
            (map (partial sum-distance points)) 
            (filter (partial > 10000))
            (count)))))
-       
+
+; DAY 7
+
+;Step G must be finished before step L can begin.
+
+(defn get-deps [data]
+  (->> data
+       (reduce (fn [{:keys [before-tasks after-tasks]} [fst snd]]
+                 (let [before-tasks 
+                        (if (before-tasks fst) before-tasks (assoc before-tasks fst #{}))] 
+                   {:before-tasks (update before-tasks snd (fn [value] (conj (or value #{}) fst)))
+                    :after-tasks (update after-tasks fst (fn [value] (conj (or value #{}) snd)))}))
+               {:before-tasks {}, :after-tasks {}})))
+
+(def input7
+  (-> "src/sip/adv-input7.txt"
+      (slurp)
+      (clojure.string/split #"\n")
+      (->> 
+          (mapv (fn [line] (re-seq #"Step (.{1}) must be finished before step (.{1}) can begin." line)))
+          (mapv (comp (partial map first) rest first))
+          (get-deps))))
+
+(defn next-task [before-tasks] 
+  (->> before-tasks
+       (filter (fn [[task before-t]] (empty? before-t)))
+       (map first)
+       (apply min-key int)))
+
+(defn drop-task [{:keys [before-tasks after-tasks]} task]
+  (->> task
+       (after-tasks)
+       (reduce (fn [tasks unblocked] 
+                 (assoc tasks unblocked (disj (tasks unblocked) task)))
+               before-tasks)
+       ((fn [new-before-tasks] (dissoc new-before-tasks task)))))         
+
+(defn adv13 
+  ([] (adv13 input7 []))
+  ([{:keys [before-tasks, after-tasks], :as deps} solution]
+    (if (empty? before-tasks)
+      (apply str solution)
+      (let [nxt (next-task before-tasks)
+            new-before-tasks (drop-task deps nxt)]   
+         (recur {:before-tasks new-before-tasks, :after-tasks after-tasks} (conj solution nxt))))))
+
