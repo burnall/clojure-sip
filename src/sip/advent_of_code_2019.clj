@@ -334,7 +334,7 @@
                {:before-tasks {}, :after-tasks {}})))
 
 (def input7
-  (-> "src/sip/adv-input7.txt"
+  (-> "src/sip/adv-input7-short.txt"
       (slurp)
       (clojure.string/split #"\n")
       (->> 
@@ -342,13 +342,20 @@
           (mapv (comp (partial map first) rest first))
           (get-deps))))
 
-(defn next-task [before-tasks] 
+(defn next-tasks [before-tasks] 
   (->> before-tasks
        (filter (fn [[task before-t]] (empty? before-t)))
-       (map first)
+       (map first)))
+
+(defn next-task [before-tasks]
+  (->> before-tasks
+       (next-tasks)
        (apply min-key int)))
 
-(defn drop-task [{:keys [before-tasks after-tasks]} task]
+(defn next-tasks-sorted [before-tasks]
+  (sort (next-tasks before-tasks)))
+
+(defn drop-task [before-tasks after-tasks task]
   (->> task
        (after-tasks)
        (reduce (fn [tasks unblocked] 
@@ -358,10 +365,64 @@
 
 (defn adv13 
   ([] (adv13 input7 []))
-  ([{:keys [before-tasks, after-tasks], :as deps} solution]
+  ([{:keys [before-tasks, after-tasks]} solution]
     (if (empty? before-tasks)
       (apply str solution)
       (let [nxt (next-task before-tasks)
-            new-before-tasks (drop-task deps nxt)]   
+            new-before-tasks (drop-task before-tasks after-tasks nxt)]   
          (recur {:before-tasks new-before-tasks, :after-tasks after-tasks} (conj solution nxt))))))
+
+
+(defn workload-update [workload]
+  (let [min-time (:time-left (apply min-key :time-left workload))
+        finished (filter #(= (:time-left %) min-time) workload)
+        pending (filter #(> (:time-left %) min-time) workload)
+        pending-updated (map #(update % :time-left (fn [time] (- time min-time))) pending)]
+    {:finished (map :task finished)
+     :pending pending-updated
+     :delta min-time}))
+
+(defn next-tasks-without-pending [before-tasks tasks-count pending-tasks]
+  (->> before-tasks
+       (next-tasks-sorted)
+       (filter (fn [task] (every? #(not= task %) pending-tasks)))
+       (take tasks-count)))
+  
+(defn drop-tasks [before-tasks after-tasks tasks]
+  (prn before-tasks after-tasks tasks)
+  (reduce (fn [new-before-tasks task]
+            (drop-task new-before-tasks after-tasks task))
+          before-tasks
+          tasks))
+
+(defn get-task-duration [task]
+  (inc (- (int task) (int \A))))
+
+
+(defn adv14 
+  ([] (adv14 input7 5))
+  ([{:keys [before-tasks after-tasks]} workers-count]
+    (let [
+      make-workload (fn [task] {:task task, :time-left (get-task-duration task)})
+      initial-workload (
+        ->> (next-tasks-sorted before-tasks)
+            (take workers-count)
+            (map make-workload))
+      
+      impl (fn [before-tasks workload cur-time]
+        (prn "impl")
+        (let [{:keys [finished pending delta]} (workload-update workload)
+              new-before-tasks (drop-tasks before-tasks after-tasks finished)
+              new-time (+ cur-time delta)]
+          (prn (Thread/sleep 500) before-tasks workload finished)    
+          (if (empty? new-before-tasks)
+             new-time
+             (recur before-tasks
+                    (->> pending 
+                         (map :task)
+                         (next-tasks-without-pending new-before-tasks (- workers-count (count pending)))
+                         (map make-workload)
+                         (concat pending))
+                    new-time))))]
+     (impl before-tasks initial-workload 0)))) 
 
