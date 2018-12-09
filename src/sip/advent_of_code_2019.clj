@@ -334,7 +334,7 @@
                {:before-tasks {}, :after-tasks {}})))
 
 (def input7
-  (-> "src/sip/adv-input7-short.txt"
+  (-> "src/sip/adv-input7.txt"
       (slurp)
       (clojure.string/split #"\n")
       (->> 
@@ -389,14 +389,14 @@
        (take tasks-count)))
   
 (defn drop-tasks [before-tasks after-tasks tasks]
-  (prn before-tasks after-tasks tasks)
+  ;(prn "drop-tasks" before-tasks after-tasks tasks)
   (reduce (fn [new-before-tasks task]
             (drop-task new-before-tasks after-tasks task))
           before-tasks
           tasks))
 
 (defn get-task-duration [task]
-  (inc (- (int task) (int \A))))
+  (+ 61 (- (int task) (int \A))))
 
 
 (defn adv14 
@@ -410,14 +410,14 @@
             (map make-workload))
       
       impl (fn [before-tasks workload cur-time]
-        (prn "impl")
+        ;(prn "impl")
         (let [{:keys [finished pending delta]} (workload-update workload)
               new-before-tasks (drop-tasks before-tasks after-tasks finished)
               new-time (+ cur-time delta)]
-          (prn (Thread/sleep 500) before-tasks workload finished)    
+          ;(prn (Thread/sleep 500) before-tasks workload finished)    
           (if (empty? new-before-tasks)
              new-time
-             (recur before-tasks
+             (recur new-before-tasks
                     (->> pending 
                          (map :task)
                          (next-tasks-without-pending new-before-tasks (- workers-count (count pending)))
