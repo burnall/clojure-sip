@@ -436,20 +436,36 @@
       (->> 
           (map #(Integer/parseInt %)))))
 
-(defn read-node [data agg]
-  (if (empty? data)
-    agg
-    (let [
-      [child-count meta-count & tail] data
-      [data-after-children-read agg-with-children] 
-        (reduce (fn [[data agg] i] (read-node data agg))
-                [tail agg]
-                (range child-count))
-      [data-after-meta-read agg-with-meta] 
-        (reduce (fn [[[meta-i & tail] agg] i] [tail (+ agg meta-i)])
-                [data-after-children-read agg-with-children]
-                (range meta-count))]
-      [data-after-meta-read agg-with-meta])))          
+(defn read-node [data]
+  (let [
+    [child-count meta-count & tail] data
+    [data-after-children-read agg-with-children] 
+      (reduce (fn [[data agg] _] 
+                (let [[d v] (read-node data)] [d (+ v agg)]))
+              [tail 0]
+              (range child-count))
+    [data-after-meta-read value-with-meta] 
+      (reduce (fn [[[meta-i & tail] agg] _] [tail (+ agg meta-i)])
+              [data-after-children-read agg-with-children]
+              (range meta-count))]
+    [data-after-meta-read value-with-meta]))          
 
-(defn adv15 [] (read-node input8 0))
-    
+(defn adv15 [] (read-node input8))
+
+(defn read-node-b [data]
+  (let [[child-count meta-count & tail] data]
+    (if (zero? child-count)
+      [(drop meta-count tail) (reduce + (take meta-count tail))]
+      (let [[data-after-children-read values]
+        (->> (range child-count) 
+             (reduce (fn [[data values] _] 
+                       (let [[d v] (read-node-b data)] [d (conj values v)])) 
+                     [tail []]) 
+                     (vec))
+        value (->> (take meta-count data-after-children-read)
+                   (map #(if (<= % (count values)) (values (dec %)) 0))
+                   (reduce +))] 
+        [(drop meta-count data-after-children-read) value]))))
+
+(defn adv16 [] (read-node-b input8))
+
