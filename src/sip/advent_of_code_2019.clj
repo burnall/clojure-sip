@@ -426,3 +426,30 @@
                     new-time))))]
      (impl before-tasks initial-workload 0)))) 
 
+; DAY 8
+
+(def input8
+  (-> "src/sip/adv-input8.txt"
+      (slurp)
+      (clojure.string/trim-newline)
+      (clojure.string/split #" ")
+      (->> 
+          (map #(Integer/parseInt %)))))
+
+(defn read-node [data agg]
+  (if (empty? data)
+    agg
+    (let [
+      [child-count meta-count & tail] data
+      [data-after-children-read agg-with-children] 
+        (reduce (fn [[data agg] i] (read-node data agg))
+                [tail agg]
+                (range child-count))
+      [data-after-meta-read agg-with-meta] 
+        (reduce (fn [[[meta-i & tail] agg] i] [tail (+ agg meta-i)])
+                [data-after-children-read agg-with-children]
+                (range meta-count))]
+      [data-after-meta-read agg-with-meta])))          
+
+(defn adv15 [] (read-node input8 0))
+    
