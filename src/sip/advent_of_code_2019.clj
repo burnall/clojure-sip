@@ -469,3 +469,42 @@
 
 (defn adv16 [] (read-node-b input8))
 
+; DAY 9
+
+;452 players; last marble is worth 71250 points
+
+(defn vector-insert [v index elem]
+  (vec (concat (subvec v 0 index) 
+               [elem]
+               (if (> (count v) index) (subvec v index) []))))   
+
+(defn vector-delete [v index]
+  (vec (concat (subvec v 0 index) (subvec v (inc index)))))
+
+(defn next-position [[winnings position current marble-no]]
+  (let [marble-no (inc marble-no)]
+  (if (zero? (mod marble-no 23))
+    (let [current (mod (- current 7) (count position))
+          player-no (mod marble-no (count winnings))
+          raise (+ marble-no (position current))
+          winnings (update winnings player-no #(+ % raise))
+          position (vector-delete position current)
+          current (if (= current (count position)) 0 current)]
+      [winnings position current marble-no])
+    (let [current (inc (mod (inc current) (count position)))
+          position (vector-insert position current marble-no)]
+      [winnings position current marble-no]))))    
+
+(defn gtest [player-count numb]
+  (-> [(vec (repeat player-count 0)) [0] 0 0]
+      (->> (iterate next-position)
+           (take numb))))
+    
+
+(defn adv17 [player-count move-count]
+  (->> [(vec (repeat player-count 0)) [0] 0 0]
+       (iterate next-position)
+       (#(nth % move-count))
+       (first)
+       (apply max)))
+
