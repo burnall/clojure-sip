@@ -471,7 +471,7 @@
 
 ; DAY 9
 
-;452 players; last marble is worth 71250 points
+; 452 players; last marble is worth 71250 points
 
 (defn vector-insert [v index elem]
   (vec (concat (subvec v 0 index) 
@@ -507,4 +507,3 @@
        (#(nth % move-count))
        (first)
        (apply max)))
-
