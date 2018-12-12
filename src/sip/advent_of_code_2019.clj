@@ -507,3 +507,17 @@
        (#(nth % move-count))
        (first)
        (apply max)))
+
+(defn adv18 [] )
+
+; DAY 10
+
+(def input10
+  (-> "src/sip/adv-input10-small.txt"
+      (slurp)
+      (clojure.string/split #"\n")
+      (->> 
+          (map (partial re-seq #"\d+"))
+          (map (partial map #(Integer/parseInt %)))
+          (map (fn [[a b c d]] {:position [a b], :velocity [c d]})))))
+

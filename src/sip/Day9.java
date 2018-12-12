@@ -42,13 +42,13 @@ public class Day9 {
         }
     }
 
-    static void f(int playerCount, int moveCount) {
+    static void run(int playerCount, int moveCount) {
         DList dl = new DList(moveCount); 
         Node current = dl.allocate();   
         current.value = 0;
         current.prev = current;
         current.next = current;
-        long[] winnings = new int[playerCount];
+        long[] winnings = new long[playerCount];
 
         for (int marbleNo = 1; marbleNo < moveCount; marbleNo++ ) {
             if (marbleNo % 23 == 0) {
@@ -72,45 +72,5 @@ public class Day9 {
     }
 }
 
-/*
-; 452 players; last marble is worth 71250 points
-
-(defn vector-insert [v index elem]
-  (vec (concat (subvec v 0 index) 
-               [elem]
-               (if (> (count v) index) (subvec v index) []))))   
-
-(defn vector-delete [v index]
-  (vec (concat (subvec v 0 index) (subvec v (inc index)))))
-
-(defn next-position [[winnings position current marble-no]]
-  (let [marble-no (inc marble-no)]
-  (if (zero? (mod marble-no 23))
-    (let [current (mod (- current 7) (count position))
-          player-no (mod marble-no (count winnings))
-          raise (+ marble-no (position current))
-          winnings (update winnings player-no #(+ % raise))
-          position (vector-delete position current)
-          current (if (= current (count position)) 0 current)]
-      [winnings position current marble-no])
-    (let [current (inc (mod (inc current) (count position)))
-          position (vector-insert position current marble-no)]
-      [winnings position current marble-no]))))    
-
-(defn gtest [player-count numb]
-  (-> [(vec (repeat player-count 0)) [0] 0 0]
-      (->> (iterate next-position)
-           (take numb))))
-    
-
-(defn adv17 [player-count move-count]
-  (->> [(vec (repeat player-count 0)) [0] 0 0]
-       (iterate next-position)
-       (#(nth % move-count))
-       (first)
-       (apply max)))
-
-(defn adv17' [player-count move-count] 
-*/
 
 
