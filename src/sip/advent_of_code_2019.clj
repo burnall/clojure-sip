@@ -513,11 +513,76 @@
 ; DAY 10
 
 (def input10
-  (-> "src/sip/adv-input10-small.txt"
+  (-> "src/sip/adv-input10.txt"
       (slurp)
       (clojure.string/split #"\n")
       (->> 
-          (map (partial re-seq #"\d+"))
+          (map (partial re-seq #"-?\d+"))
           (map (partial map #(Integer/parseInt %)))
           (map (fn [[a b c d]] {:position [a b], :velocity [c d]})))))
 
+(defn get-std [positions]
+  (let [
+    cnt (count positions)
+    average-x (/ (reduce + (map first positions)) cnt)
+    average-y (/ (reduce + (map second positions)) cnt)
+    sqr-x (reduce (fn [acc x] (Math/pow (- x average-x) 2)) (map first positions))
+    sqr-y (reduce (fn [acc y] (Math/pow (- y average-y) 2)) (map second positions))]
+    
+    (Math/round (/ (Math/sqrt (+ sqr-x sqr-y)) cnt))))
+
+(defn get-same-x-max [positions] 
+  (->> positions 
+       (map first)
+       (frequencies)
+       (apply max-key val)
+       (val)))
+
+(defn next-sky [stars] 
+  (map (fn [{:keys [position velocity]}]
+         (let [[px py] position
+               [vx vy] velocity]
+           {:position [(+ px vx) (+ py vy)]
+            :velocity [vx vy]}))
+       stars))
+
+(defn star-walk [a b]
+  (->> input10
+      (iterate next-sky)
+      (drop a)
+      (take b)
+      (mapv (partial map :position))
+      ;(mapv get-same-x-max)))
+      (mapv get-std)
+      (mapv (fn [i std] [std i]) (range))))
+
+(defn star-draw [positions] 
+  (let [[minx maxx miny maxy] 
+    (->> positions 
+         (apply (juxt (partial min-key first) (partial max-key first) (partial min-key second) (partial max-key second)))
+         (map #(% %2) [first first second second]))
+    field (mapv (fn [_] (vec (repeat (- maxx minx -1) \.))) 
+                (range (- maxy miny -1)))
+    drawing (reduce (fn [field [x y]] (assoc-in field [(- y miny) (- x minx)] \#))
+                    field
+                    positions)]
+    (->> drawing
+         (map (partial apply str))
+         (interpose "\n") 
+         (apply str))))
+
+(defn draw-loop [start] 
+  (let [sky (loop [i start sky (next-sky input10)] (if (> i 0) (recur (dec i) (doall (next-sky sky))) sky)) 
+        f (fn [sky start]  
+            (prn "seconds" start)
+            (print (star-draw (map :position sky)))
+            (flush)
+            (if-not (= "x" (read-line))
+              (recur (next-sky sky) (inc start))))]
+    (f sky start)))        
+     
+; DAY 11
+
+(defn adv21 [] )
+
+ 
