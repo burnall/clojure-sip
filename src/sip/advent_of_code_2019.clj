@@ -583,6 +583,53 @@
      
 ; DAY 11
 
-(defn adv21 [] )
+(defn get-power-level [x y serial]
+  (let [rack-id (+ 10 x)]
+    (-> rack-id 
+        (* y)
+        (+ serial)
+        (* rack-id)
+        (mod 1000)
+        (quot 100)
+        (- 5))))
 
- 
+(defn sum-square [matrix side x-left y-top]
+  (->>
+       (for [x (range x-left (+ x-left side))
+             y (range y-top (+ y-top side))]
+          (get-in matrix [y x])) 
+       (reduce +)))
+
+(defn adv21 
+  ([] (adv21 3 300 1723))
+  ([side grid-count serial]
+    (let [cells-power (mapv (fn [y] (mapv (fn [x] (get-power-level (inc x) (inc y) serial)) 
+                                    (range grid-count)))
+                            (range grid-count))]
+      (->> (for [x (range (- grid-count side)) 
+                 y (range (- grid-count side))] 
+             [x y])
+           (reduce (fn [[maxv p] [x y]] 
+                     (let [curr (sum-square cells-power side x y)]
+                       (if (> curr maxv) 
+                         [curr [(inc x) (inc y)]]
+                         [maxv p])))
+                   [-100])))))      
+
+; DAY 12
+
+(defn get-plants-config [lines]
+  (let [initial (re-find #"[.#]+" (first lines))]
+    (->> lines
+         (drop 2 )
+         (map (partial re-seq #"([.#]+) => (.)"))
+         (map first)
+         (map (fn [[_ from [to]]] {:from from, :to to}))
+         ((fn [rules] {:initial initial, :rules rules})))))
+
+(def input12
+  (-> "src/sip/adv-input12-small.txt"
+      (slurp)
+      (clojure.string/split #"\n")
+      (get-plants-config)))
+
