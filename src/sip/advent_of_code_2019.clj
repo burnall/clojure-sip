@@ -624,7 +624,7 @@
          (drop 2 )
          (map (partial re-seq #"([.#]+) => (.)"))
          (map first)
-         (map (fn [[_ from [to]]] {:from from, :to to}))
+         (mapv (fn [[_ from [to]]] {:from from, :to to}))
          ((fn [rules] {:initial initial, :rules rules})))))
 
 (def input12
@@ -633,3 +633,30 @@
       (clojure.string/split #"\n")
       (get-plants-config)))
 
+(defn next-plants [plants rules rule-len] 
+    (let [
+      max-right (- (count plants) rule-len)
+      middle (inc (quot rule-len 2))
+      iter (fn [current-pos new-plants] 
+        (if (= current-pos max-right)  
+          new-plants
+          (if-let [rule (->> rules
+                             (filter (partial =  (subvec plants current-pos rule-len)))
+                             (first))]
+            (recur (inc current-pos) (assoc new-plants (+ current-pos middle)))  
+            (recur (inc current-pos) new-plants))))]
+     (iter 0 (vec (repeat (count plants) \.)))))
+
+
+(defn adv23 
+  ([] (adv23 input12 20 5))
+  ([plants-config generations rule-len] 
+    (let [{:keys [initial rules]} input12
+          free-space-len (count initial)
+          plants (vec (concat (repeat free-space-len \.) 
+                      initial 
+                      (repeat free-space-len \.)))]
+      (next-plants initial rules rule-len))))
+
+                      
+        
