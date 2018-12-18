@@ -649,22 +649,22 @@
 
 
 (defn adv23 
-  ([] (adv23 input12 20 5))
+  ([] (adv23 input12 100 5))
   ([plants-config generations rule-len] 
     (let [{:keys [initial rules]} input12
-          free-space-len (count initial)
-          rng (* 4 free-space-len)
-          plants (vec (concat (repeat rng \.) 
+          buf-len (* 2 generations)
+          plants (vec (concat (repeat buf-len \.) 
                       initial 
-                      (repeat rng \.)))
+                      (repeat buf-len \.)))
           new-plants  
             (loop [i 0 i-plants plants]
+              (prn (clojure.string/trim (clojure.string/replace (apply str i-plants) "." " ")) i (- (.indexOf i-plants \#) buf-len))
               (if (= i generations) 
                 i-plants
                 (recur (inc i) (next-plants i-plants rules rule-len))))]
      (->> new-plants
-          (map (fn [i p] (if (= p \#) i 0)) (range (- rng) rng)) 
-          (reduce +)))))
+          (map (fn [i p] (if (= p \#) i 0)) (range (- buf-len) Integer/MAX_VALUE)) 
+          (reduce + (long 0))))))
 
                       
         
