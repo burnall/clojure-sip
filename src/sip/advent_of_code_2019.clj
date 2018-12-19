@@ -666,5 +666,30 @@
           (map (fn [i p] (if (= p \#) i 0)) (range (- buf-len) Integer/MAX_VALUE)) 
           (reduce + (long 0))))))
 
-                      
-        
+
+; DAY 13
+
+(def input13
+  (-> "src/sip/adv-input13-small.txt"
+      (slurp)
+      (clojure.string/split #"\n")
+      (->> (map vec))
+      (vec)
+      (get-carts-config)))
+
+(defn find-indexes [carts line]
+  (->> line
+       (keep-indexed (fn [idx value] (if (carts value) [idx value])))))
+
+(defn get-carts-config [raw-map]
+  (-> (mapcat (fn [y line] 
+                (->> line 
+                     (find-indexes #{\v \^ \< \>})
+                     (map (fn [[x value]] [x y value]))))
+              (range)
+              raw-map)
+      ((fn [carts] {:map raw-map, :carts carts}))))        
+              
+
+
+(defn adv25 [])
