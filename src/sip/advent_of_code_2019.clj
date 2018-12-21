@@ -669,27 +669,79 @@
 
 ; DAY 13
 
+(defn find-indexes [carts line]
+  (->> line
+       (keep-indexed (fn [idx value] (if (carts value) [idx value])))))
+
+(defn clear-chart [chart carts]
+  (reduce (fn [agg-chart {:keys [pos value]}] 
+            (assoc-in agg-chart 
+                      (reverse pos) 
+                      ({\v \|, \^ \|, \< \-, \> \-} value)))  
+          chart
+          carts))
+
+(defn get-carts-config [chart]
+  (-> (mapcat (fn [y line] 
+                (->> line 
+                     (find-indexes #{\v \^ \< \>})
+                     (map (fn [[x value]] {:pos [x y], :value value, :turn 0}))))
+              (range)
+              chart)
+      (vec)        
+      ((fn [carts] [(clear-chart chart carts) {:carts carts, :current-index 0}]))))        
+ 
 (def input13
-  (-> "src/sip/adv-input13-small.txt"
+  (-> "src/sip/adv-input13.txt"
       (slurp)
       (clojure.string/split #"\n")
       (->> (map vec))
       (vec)
       (get-carts-config)))
 
-(defn find-indexes [carts line]
-  (->> line
-       (keep-indexed (fn [idx value] (if (carts value) [idx value])))))
+(defn cart-here? [carts pos]
+  (some (fn [cart] (= (:pos cart) pos)) carts))
 
-(defn get-carts-config [raw-map]
-  (-> (mapcat (fn [y line] 
-                (->> line 
-                     (find-indexes #{\v \^ \< \>})
-                     (map (fn [[x value]] [x y value]))))
-              (range)
-              raw-map)
-      ((fn [carts] {:map raw-map, :carts carts}))))        
-              
+(defn find-collision [chart {:keys [carts current-index]}]
+  (let [{:keys [pos value turn]} (carts current-index)
+        map-value (get-in chart (reverse pos))
+        next-turn-map {\v [\> \v \<]
+                      \^ [\< \^ \>]
+                      \< [\v \< \^]
+                      \> [\^ \> \v]}
+        gradient {\v [0 1], \^ [0 -1], \< [-1 0], \> [1 0]}                  
+        next-pos-map {[\v \|] [[0 1] \v], [\v \\] [[1 0] \>], [\v \/] [[-1 0] \<],
+                      [\^ \|] [[0 -1] \^], [\^ \\] [[-1 0] \<], [\^ \/] [[1 0] \>]
+                      [\> \-] [[1 0] \>], [\> \\] [[0 1] \v], [\> \/] [[0 -1] \^],
+                      [\< \-] [[-1 0] \<], [\< \\] [[0 -1] \^], [\< \/] [[0 1] \v]}
+        get-next-on-turn (fn [] 
+          (let [next-value (get-in next-turn-map [value turn])
+                next-pos (map + pos (gradient next-value))
+                next-turn (mod (inc turn) 3)] 
+            {:next-value next-value, :next-pos next-pos, :next-turn next-turn}))
+       get-next-straight (fn []
+         (let [[delta next-value] (next-pos-map [value map-value])
+               next-pos (map + pos delta)]
+           {:next-value next-value, :next-pos next-pos, :next-turn turn}))
+       {:keys [next-value next-pos next-turn]} (if (= map-value \+) (get-next-on-turn) (get-next-straight))]
+     
+     (if (cart-here? carts next-pos)
+       next-pos
+       (recur chart 
+              {:carts (assoc carts current-index {:pos next-pos, :value next-value, :turn next-turn})
+               :current-index (mod (inc current-index) (count carts))}))))
+
+(defn print-chart [chart carts]
+  (->> carts
+       (reduce (fn [agg-chart cart] 
+                 (assoc-in agg-chart (reverse (:pos cart)) (:value cart))) 
+               chart)
+       (map (partial apply str))
+       (interpose "\n")
+       (apply str)))
 
 
-(defn adv25 [])
+(defn adv25 []
+  (let [[chart cart-config] input13]
+    (find-collision chart cart-config)))
+    
