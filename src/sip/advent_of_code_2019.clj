@@ -692,15 +692,17 @@
       ((fn [carts] {:chart (clear-chart chart carts) :carts carts, :current-index 0}))))
 
 (def input13
-  (-> "src/sip/adv-input13.txt"
+  (-> "src/sip/adv-input13-small-2.txt"
       (slurp)
       (clojure.string/split #"\n")
       (->> (map vec))
       (vec)
       (get-carts-config)))
 
-(defn cart-here? [carts pos]
-  (some (fn [cart] (= (:pos cart) pos)) carts))
+(defn index-cart-by-pos [carts pos]
+  (->> carts 
+       (keep-indexed (fn [idx cart] (when (= pos (:pos cart)) idx)))
+       (first)))
 
 (defn get-next-straight [{:keys [value pos turn]} map-value]
   (let [next-pos-map {[\v \|] [[0 1] \v], [\v \\] [[1 0] \>], [\v \/] [[-1 0] \<],
@@ -728,14 +730,38 @@
        {:keys [next-value next-pos next-turn]} (if (= map-value \+) 
                                                  (get-next-on-turn cart map-value) 
                                                  (get-next-straight cart map-value))
-       next-index (mod (inc current-index) (count carts))
-       next-carts (fn [carts] (if (zero? next-index) (vec (sort-by :pos carts)) carts))]
+       get-next-carts (fn [carts next-index] (if (zero? next-index) (vec (sort-by :pos carts)) carts))]
      
-     (if (cart-here? carts next-pos)
-       next-pos
-       (recur chart 
-              (next-carts (assoc carts current-index {:pos next-pos, :value next-value, :turn next-turn}))
-              next-index))))
+    (if (index-cart-by-pos carts next-pos)
+      next-pos
+      (let [next-index (mod (inc current-index) (count carts))]   
+        (recur chart 
+               (get-next-carts (assoc carts current-index {:pos next-pos, :value next-value, :turn next-turn}) next-index)
+               next-index)))))
+
+(defn find-remaining-car [chart carts current-index]
+  (let [{pos :pos, :as cart} (carts current-index)
+        map-value (get-in chart (reverse pos))
+       {:keys [next-value next-pos next-turn]} (if (= map-value \+) 
+                                                 (get-next-on-turn cart map-value) 
+                                                 (get-next-straight cart map-value))
+       get-next-carts (fn [carts next-index] (if (zero? next-index) (vec (sort-by :pos carts)) carts))
+       collided-index (index-cart-by-pos carts pos)]
+     
+    (if (some? collided-index)
+      (let [need-next-mov (and (= (count carts) 3) (or (zero? current-index) (not= (:pos (carts 2)) next-pos)))   
+            next-carts (vec (filter (fn [{p :pos}] (and (not= p pos) (not= p next-pos))) carts))
+            next-index (if (< collided-index current-index) (dec current-index) current-index)
+            next-index (if (>= next-index (count next-carts)) 0 next-index)
+            next-carts (get-next-carts next-carts next-index)]
+        (condp = (count next-carts)
+          0 "damn!"
+          1 "cool"
+          (recur chart next-carts next-index)))
+      (recur chart 
+             (get-next-carts (assoc carts current-index {:pos next-pos, :value next-value, :turn next-turn}))
+             (mod (inc current-index) (count carts))))))
+             
 
 (defn print-chart [chart carts]
   (->> carts
@@ -750,4 +776,8 @@
 (defn adv25 []
   (let [{:keys [chart carts current-index]} input13]
     (find-collision chart carts current-index)))
-    
+
+(defn adv26 []
+  (let [{:keys [chart carts current-index]} input13]
+    (find-remaining-car chart carts current-index)))
+ 
