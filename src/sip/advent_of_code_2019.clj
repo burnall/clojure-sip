@@ -787,4 +787,42 @@
 (defn adv26 []
   (let [{:keys [chart carts current-index]} input13]
     (find-remaining-car chart carts current-index)))
- 
+
+
+; DAY 14
+
+(defn get-initial-recipes [cnt]
+  (let [v (vec (byte-array (+ cnt)))]
+    {:cnt 2
+     :data (assoc (assoc v 0 3) 1 7)
+     :cur-a 0
+     :cur-b 1}))
+  
+(defn next-recipes [{:keys [cnt data cur-a cur-b]}] 
+  (let [s (+ (data cur-a) (data cur-b))
+        next-cnt (if (> s 9) (+ cnt 2) (+ cnt 1))
+        r {:cnt next-cnt
+           :cur-a (mod (+ cur-a (data cur-a) 1) next-cnt)
+           :cur-b (mod (+ cur-b (data cur-b) 1) next-cnt)}]
+    (if (> s 9)
+      (let [d (assoc (assoc data cnt (quot s 10))
+                     (inc cnt)
+                     (mod s 10))]
+        (assoc r :data d))
+      (assoc r          
+             :data
+             (assoc data cnt s)))))
+
+(defn adv27 [cnt after]
+  (->> (+ cnt after 1)
+       (get-initial-recipes)
+       (iterate next-recipes)
+       ;(take 10)
+       ;(map prn)))
+       (drop-while (fn [recipes] (< (:cnt recipes) (+ cnt after))))
+       (first)
+       (:data)
+       (drop cnt)
+       (take after)
+       (apply str)))
+
