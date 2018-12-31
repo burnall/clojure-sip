@@ -796,14 +796,16 @@
     {:cnt 2
      :data (assoc (assoc v 0 3) 1 7)
      :cur-a 0
-     :cur-b 1}))
+     :cur-b 1
+     :i 0}))
   
-(defn next-recipes [{:keys [cnt data cur-a cur-b]}] 
+(defn next-recipes [{:keys [cnt data cur-a cur-b i]}] 
   (let [s (+ (data cur-a) (data cur-b))
         next-cnt (if (> s 9) (+ cnt 2) (+ cnt 1))
         r {:cnt next-cnt
            :cur-a (mod (+ cur-a (data cur-a) 1) next-cnt)
-           :cur-b (mod (+ cur-b (data cur-b) 1) next-cnt)}]
+           :cur-b (mod (+ cur-b (data cur-b) 1) next-cnt)
+           :i (inc i)}]
     (if (> s 9)
       (let [d (assoc (assoc data cnt (quot s 10))
                      (inc cnt)
@@ -817,12 +819,25 @@
   (->> (+ cnt after 1)
        (get-initial-recipes)
        (iterate next-recipes)
-       ;(take 10)
-       ;(map prn)))
        (drop-while (fn [recipes] (< (:cnt recipes) (+ cnt after))))
        (first)
        (:data)
        (drop cnt)
        (take after)
        (apply str)))
+
+(defn get-receipts-matcher [pattern]
+  (let [cnt-p (count pattern)]
+    (fn [{data :data, cnt :cnt}]
+      (cond 
+        (and (>= cnt cnt-p) (= (subvec data (- cnt cnt-p) cnt) pattern)) (- cnt cnt-p)
+        (and (> cnt cnt-p) (= (subvec data (- cnt cnt-p 1) (dec cnt)) pattern)) (- cnt cnt-p 1)))))
+  
+
+(defn adv28 [pattern]
+  (let [matcher (get-receipts-matcher pattern)]
+    (->> 1000000
+         (get-initial-recipes)
+         (iterate next-recipes)
+         (some matcher))))
 
