@@ -1,10 +1,10 @@
-(ns sip.advent-of-code-2019)
+(ns sip.advent2019)
 
 ; https://adventofcode.com/2018
 
 ; DAY 1
 (def input1
-  (-> "src/sip/adv-input1.txt"
+  (-> "src/sip/data/adv-input1.txt"
       (slurp)
       (clojure.string/split #"\n")
       ((fn [s] (map #(Integer/parseInt %) s)))))
@@ -31,7 +31,7 @@
 ; DAY 2
 
 (def input2
-  (-> "src/sip/adv-input2.txt"
+  (-> "src/sip/data/adv-input2.txt"
       (slurp)
       (clojure.string/split #"\n")))
 
@@ -86,7 +86,7 @@
        ((fn [[id x0 y0 dx dy]] {:id id, :a [x0 y0], :b [(+ x0 dx) (+ y0 dy)]}))))
 
 (def input3
-  (-> "src/sip/adv-input3.txt"
+  (-> "src/sip/data/adv-input3.txt"
       (slurp)
       (clojure.string/split #"\n")
       (#(mapv parse-square %))))
@@ -151,7 +151,7 @@
             "Guard" :begin msg)}))      
 
 (def input4
-  (-> "src/sip/adv-input4.txt"
+  (-> "src/sip/data/adv-input4.txt"
       (slurp)
       (clojure.string/split #"\n")
       (#(mapv parse-guard-log %))))
@@ -205,7 +205,7 @@
 
 
 (def input5
-  (->> "src/sip/adv-input5.txt"
+  (->> "src/sip/data/adv-input5.txt"
        (slurp)
        (clojure.string/trim-newline)))
 
@@ -236,7 +236,7 @@
 ;# DAY 6
 
 (def input6
-  (-> "src/sip/adv-input6.txt"
+  (-> "src/sip/data/adv-input6.txt"
       (slurp)
       (clojure.string/split #"\n")
       (->> 
@@ -334,7 +334,7 @@
                {:before-tasks {}, :after-tasks {}})))
 
 (def input7
-  (-> "src/sip/adv-input7.txt"
+  (-> "src/sip/data/adv-input7.txt"
       (slurp)
       (clojure.string/split #"\n")
       (->> 
@@ -429,7 +429,7 @@
 ; DAY 8
 
 (def input8
-  (-> "src/sip/adv-input8.txt"
+  (-> "src/sip/data/adv-input8.txt"
       (slurp)
       (clojure.string/trim-newline)
       (clojure.string/split #" ")
@@ -513,7 +513,7 @@
 ; DAY 10
 
 (def input10
-  (-> "src/sip/adv-input10.txt"
+  (-> "src/sip/data/adv-input10.txt"
       (slurp)
       (clojure.string/split #"\n")
       (->> 
@@ -628,7 +628,7 @@
          ((fn [rules] {:initial initial, :rules rules})))))
 
 (def input12
-  (-> "src/sip/adv-input12.txt"
+  (-> "src/sip/data/adv-input12.txt"
       (slurp)
       (clojure.string/split #"\n")
       (get-plants-config)))
@@ -692,7 +692,7 @@
       ((fn [carts] {:chart (clear-chart chart carts) :carts carts, :current-index 0}))))
 
 (def input13
-  (-> "src/sip/adv-input13.txt"
+  (-> "src/sip/data/adv-input13.txt"
       (slurp)
       (clojure.string/split #"\n")
       (->> (map vec))
@@ -840,4 +840,5 @@
          (get-initial-recipes)
          (iterate next-recipes)
          (some matcher))))
+
 
