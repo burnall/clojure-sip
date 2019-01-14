@@ -4,10 +4,10 @@
   (condp = raw-value
     \# {:terrain (assoc-in terrain [y x] :wall), :creatures creatures}
     \. {:terrain (assoc-in terrain [y x] :space), :creatures creatures}
-    \G (let [p {:id (count creatures), :hp 300, :type :goblin, :pos [x y]}]
-         {:terrain (assoc-in terrain [y x] p), :creatures (conj creatures p)})
-    \E  (let [p {:id (count creatures), :hp 300, :type :elf, :pos [x y]}]
-         {:terrain (assoc-in terrain [y x] p), :creatures (conj creatures p)})
+    \G (let [creature {:id (count creatures), :hp 300, :type :goblin, :pos [x y]}]
+         {:terrain (assoc-in terrain [y x] creature), :creatures (conj creatures creature)})
+    \E  (let [creature {:id (count creatures), :hp 300, :type :elf, :pos [x y]}]
+         {:terrain (assoc-in terrain [y x] creature), :creatures (conj creatures creature)})
     (throw (Exception. "Unexpected object on the map"))))
 
 (defn get-initial-state [raw-terrain]
@@ -53,41 +53,66 @@
           :creatures creatures-after
           :current (find-next-creature-index creatures-after current)}))))
 
-(defn find-start-move-to-target [moves]
-  (->> moves 
+(defn find-start-move-to-target [possible-moves]
+  (prn 333) (->> possible-moves 
       (filter (comp :dest :type))
       (sort (comp :start-pos reverse))
       (first)
       (:start-pos)))
 
-(defn group-moves [] 
-)      
+(defn group-moves [possible-moves]
+  (->> possible-moves
+       (group-by :dest-pos)
+       (map (fn [[dest-pos grouped]] [dest-pos (set (map :start-pos))]))
+       (into {})))
 
 ; {[x y] #{[x y] [x' y]}
-(defn get-possible-moves [terrain ctype visited current-positions]
+(defn get-possible-moves [terrain enemy-type visited current-positions]
   (let [get-neigbours (fn [x y start-pos]
     (->> directions 
          (map (fn [[dx dy]] 
             (let [dest-pos [( + x dx) (+ y dy)]]
               {:start-pos [x y], :dest-pos dest-pos, :dest (get-in terrain (reverse dest-pos))})))
-         (filter (fn [[{dest :dest}]] (or (= dest :space) (= (:type dest) ctype))))))]
+         (filter (fn [[{dest :dest}]] (or (= dest :space) (= (:type dest) enemy-type))))))]
     (->> current-positions
          (keys)
          (mapcat (fn [[x y]] (get-neigbours x y (current-positions [x y])))))))
 
+(defn search-for-target [terrain enemy-type visited current-positions]
+  (let [aa (prn "search")  possible-moves (get-possible-moves terrain enemy-type visited current-positions)
+        ac (prn "s1" possible-moves) start-move (find-start-move-to-target possible-moves) bb (prn "s2")]
+    (if start-move 
+      start-move
+      (let [moves (group-moves possible-moves)
+            visited-next (apply conj visited (keys moves))]
+        (recur terrain enemy-type visited-next moves)))))
+
+(defn get-initial-current-positions [terrain [x y]] 
+  (->> directions
+       (map (fn [[dx dy]]
+         (let [p [(+ x dx)  (+ y dy)]]
+           {:pos p, :value (get-in terrain (reverse p))})))
+       (filter (fn [{v :value}] (= v :space)))
+       (map (fn [{p :pos}] [p #{p}]))
+       (into {})))
 
 (defn move-creature [{:keys [terrain creatures current], :as state}]
-)
+  (let [{ctype :type, pos :pos} (creatures current)
+        enemy-type ({:goblin :elf, :elf :goblin} ctype)
+        initial-positions (get-initial-current-positions terrain pos)
+        initial-visited (into #{pos} (map :pos initial-positions))]
+    (search-for-target terrain enemy-type initial-visited initial-positions)))
 
 (defn next-state [state]
-  (let [new-state (try-attack state)]
-    (if new-state
-      new-state
+  (let [aa (prn 123) state-after (try-attack state)]
+    (if state-after
+      state-after
       (move-creature state))))
 
 (defn part1
-  ([] part1 (assoc input :current 0))
+  ([] (part1 (assoc input :current 0)))
   ([state]
     (->> state
-         (iterate next-state))))
+         (iterate next-state)
+         (second))))
 
