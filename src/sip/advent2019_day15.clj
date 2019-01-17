@@ -54,38 +54,44 @@
           :current (find-next-creature-index creatures-after current)}))))
 
 (defn find-start-move-to-target [possible-moves]
-  (prn 333) (->> possible-moves 
-      (filter (comp :dest :type))
-      (sort (comp :start-pos reverse))
-      (first)
-      (:start-pos)))
+  (->> possible-moves 
+      (filter (comp :type :dest))
+      (mapcat :start-positions)
+      (sort-by (comp vec reverse))
+      (first)))
 
 (defn group-moves [possible-moves]
   (->> possible-moves
        (group-by :dest-pos)
-       (map (fn [[dest-pos grouped]] [dest-pos (set (map :start-pos))]))
+       (map (fn [[dest-pos grouped]] 
+         [dest-pos 
+          (apply clojure.set/union (map (comp set :start-positions) grouped))]))
        (into {})))
 
-; {[x y] #{[x y] [x' y]}
+; {[x y] #{[x0 y0] [x0' y0']}
 (defn get-possible-moves [terrain enemy-type visited current-positions]
-  (let [get-neigbours (fn [x y start-pos]
+  (let [get-neigbour-moves (fn [x y start-positions]
     (->> directions 
          (map (fn [[dx dy]] 
-            (let [dest-pos [( + x dx) (+ y dy)]]
-              {:start-pos [x y], :dest-pos dest-pos, :dest (get-in terrain (reverse dest-pos))})))
-         (filter (fn [[{dest :dest}]] (or (= dest :space) (= (:type dest) enemy-type))))))]
+           (let [dest-pos [( + x dx) (+ y dy)]]
+             {:start-positions start-positions, :dest-pos dest-pos, :dest (get-in terrain (reverse dest-pos))})))
+         (filter (fn [{dest :dest}] (or (= dest :space) (= (:type dest) enemy-type))))
+         (filter (comp not visited :dest-pos))))]
     (->> current-positions
          (keys)
-         (mapcat (fn [[x y]] (get-neigbours x y (current-positions [x y])))))))
+         (mapcat (fn [[x y]] (get-neigbour-moves x y (current-positions [x y])))))))
 
-(defn search-for-target [terrain enemy-type visited current-positions]
-  (let [aa (prn "search")  possible-moves (get-possible-moves terrain enemy-type visited current-positions)
-        ac (prn "s1" possible-moves) start-move (find-start-move-to-target possible-moves) bb (prn "s2")]
+
+(defn search-for-target [terrain enemy-type visited current-positions cnt]
+  (let [possible-moves (get-possible-moves terrain enemy-type visited current-positions)
+        start-move (find-start-move-to-target possible-moves)]
     (if start-move 
       start-move
       (let [moves (group-moves possible-moves)
             visited-next (apply conj visited (keys moves))]
-        (recur terrain enemy-type visited-next moves)))))
+        (if (zero? cnt) 
+          33
+          (recur terrain enemy-type visited-next moves (dec cnt)))))))
 
 (defn get-initial-current-positions [terrain [x y]] 
   (->> directions
@@ -101,10 +107,10 @@
         enemy-type ({:goblin :elf, :elf :goblin} ctype)
         initial-positions (get-initial-current-positions terrain pos)
         initial-visited (into #{pos} (map :pos initial-positions))]
-    (search-for-target terrain enemy-type initial-visited initial-positions)))
+    (search-for-target terrain enemy-type initial-visited initial-positions -1)))
 
 (defn next-state [state]
-  (let [aa (prn 123) state-after (try-attack state)]
+  (let [state-after (try-attack state)]
     (if state-after
       state-after
       (move-creature state))))
