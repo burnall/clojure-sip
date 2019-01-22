@@ -51,7 +51,8 @@
              creatures-after (assoc creatures (:id target) target-after)]
          {:terrain terrain-after
           :creatures creatures-after
-          :current (find-next-creature-index creatures-after current)}))))
+          :current (find-next-creature-index creatures-after current)
+          :last-moved current}))))
 
 (defn find-start-move-to-target [possible-moves]
   (->> possible-moves 
@@ -81,17 +82,15 @@
          (keys)
          (mapcat (fn [[x y]] (get-neigbour-moves x y (current-positions [x y])))))))
 
-
-(defn search-for-target [terrain enemy-type visited current-positions cnt]
+; state -> [x y]
+(defn search-for-target [terrain enemy-type visited current-positions]
   (let [possible-moves (get-possible-moves terrain enemy-type visited current-positions)
         start-move (find-start-move-to-target possible-moves)]
     (if start-move 
       start-move
       (let [moves (group-moves possible-moves)
             visited-next (apply conj visited (keys moves))]
-        (if (zero? cnt) 
-          33
-          (recur terrain enemy-type visited-next moves (dec cnt)))))))
+          (recur terrain enemy-type visited-next moves)))))
 
 (defn get-initial-current-positions [terrain [x y]] 
   (->> directions
@@ -107,13 +106,17 @@
         enemy-type ({:goblin :elf, :elf :goblin} ctype)
         initial-positions (get-initial-current-positions terrain pos)
         initial-visited (into #{pos} (map :pos initial-positions))]
-    (search-for-target terrain enemy-type initial-visited initial-positions -1)))
+    (search-for-target terrain enemy-type initial-visited initial-positions)))
 
-(defn next-state [state]
-  (let [state-after (try-attack state)]
-    (if state-after
+;
+; state keys - :terrain, :creatures, :current, :last-moved, :done
+(defn next-state [{:keys [last-moved current] :as state}]
+  (if (= last-moved current) 
+    (assoc state :done true)
+    (if-let [state-after (try-attack state)]
       state-after
-      (move-creature state))))
+      (let [move (move-creature state)]
+        move))))
 
 (defn part1
   ([] (part1 (assoc input :current 0)))
