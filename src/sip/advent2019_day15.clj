@@ -61,8 +61,8 @@
           :current (find-next-creature-index creatures-after current)
           :last-moved current}))))
 
-
-(defn find-start-move-to-target [possible-moves]
+; Find  [{:start-positions, :dest-pos, :dest}]
+(defn find-attacking-move [possible-moves]
   (->> possible-moves 
       (filter (comp :type :dest))
       (mapcat :start-positions)
@@ -77,7 +77,7 @@
           (apply clojure.set/union (map (comp set :start-positions) grouped))]))
        (into {})))
 
-; Input - {[x y] #{[x0 y0] [x0' y0']} - map key - a destination point, value - vector of starting positionss
+; Input - {[x y] #{[x0 y0] [x0' y0']} - map key - a destination point, value - vector of starting positions
 ; [{:start-positions, :dest-pos, :dest}] 
 ; TODO: fix keys
 (defn get-possible-moves [terrain enemy-type visited current-positions]
@@ -95,7 +95,7 @@
 ; Returning a starting point if enemy is reachable or nil otherwise
 (defn search-for-target [terrain enemy-type visited current-positions]
   (let [possible-moves (get-possible-moves terrain enemy-type visited current-positions)
-        start-move (find-start-move-to-target possible-moves)]
+        start-move (find-attacking-move possible-moves)]
     (if start-move 
       start-move
       (let [moves (group-moves possible-moves)
