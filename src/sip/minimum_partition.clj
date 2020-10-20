@@ -1,5 +1,6 @@
 (ns sip.minimum-partition)
 
+
 (defn walkdown [n [new-solutions [best-v best-goal]] [v goal]] 
   (let [new-solutions (conj new-solutions [v goal])
         new-goal (- goal n)]
